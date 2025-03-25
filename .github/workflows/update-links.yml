@@ -2,11 +2,10 @@ name: Update Links and Deploy
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # Runs every 30 minutes
+    - cron: '0 * * * *' # Runs every hour at the start of the hour
   push:
     branches:
       - main
-  workflow_dispatch: # Allows manual execution of the workflow
 
 jobs:
   update-links:
@@ -51,8 +50,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --global user.email "prolladmail@gmail.com"
-          git config --global user.name "Prollad99"
+          git config --global user.email "rohan735234@gmail.com"
+          git config --global user.name "iamrohan99"
 
       - name: Commit and Push changes
         env:
@@ -68,7 +67,7 @@ jobs:
           # Push with retry logic
           max_retries=5
           for i in $(seq 1 $max_retries); do
-            git push https://x-access-token:$ACTIONS_DEPLOY_KEY@github.com/Prollad99/woz-com.git && break
+            git push https://x-access-token:$ACTIONS_DEPLOY_KEY@github.com/iamrohan99/woz-com.git && break
             echo "Push attempt $i/$max_retries failed"
             sleep 5
             git pull --rebase
