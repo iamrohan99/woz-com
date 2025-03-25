@@ -1,0 +1,11 @@
+baseURL = "https://www.wizardofozfreecoins.com"
+languageCode = "en-us"
+title = "Wizard of Oz Slots Free Coins"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
+[taxonomies]
+  tag = "tags"

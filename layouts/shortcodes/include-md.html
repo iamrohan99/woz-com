@@ -1,0 +1,4 @@
+<!-- layouts/shortcodes/include-md.html -->
+{{ $file := .Get 0 }}
+{{ $content := readFile $file | markdownify }}
+{{ $content }}

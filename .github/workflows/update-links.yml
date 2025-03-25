@@ -1,0 +1,75 @@
+name: Update Links and Deploy
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Runs every 30 minutes
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual execution of the workflow
+
+jobs:
+  update-links:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install npm packages
+        run: npm install axios cheerio
+
+      - name: Fetch and Update Links
+        run: |
+          node index-js/wizard-of-oz.js
+          echo "Updated links content:"
+          cat links-json/wizard-of-oz.json
+
+      - name: Generate Reward Page
+        run: |
+          # Create/replace the markdown file
+          echo '<ul class="list-group mt-3 mb-4">' > static/rewards/wizard-of-oz.md
+            
+          # Process JSON with jq (now simplified)
+          jq -r '.[] | "  <li class=\"list-group-item d-flex justify-content-between align-items-center\">\n    <span>Wizard of Oz Coins \(.date)</span>\n    <a href=\"\(.href)\" class=\"btn btn-primary btn-sm\">Collect</a>\n  </li>"' \
+            links-json/wizard-of-oz.json >> static/rewards/wizard-of-oz.md
+            
+          echo '</ul>' >> static/rewards/wizard-of-oz.md
+          echo "Generated markdown content:"
+          cat static/rewards/wizard-of-oz.md
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "prolladmail@gmail.com"
+          git config --global user.name "Prollad99"
+
+      - name: Commit and Push changes
+        env:
+          ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+        run: |
+          # Add changes and commit
+          git add static/rewards/wizard-of-oz.md links-json/wizard-of-oz.json
+          git commit -m "Update wizard-of-oz reward links [$(date +'%Y-%m-%d %H:%M')]" || echo "No changes to commit"
+
+          # Synchronize with remote
+          git pull --rebase
+            
+          # Push with retry logic
+          max_retries=5
+          for i in $(seq 1 $max_retries); do
+            git push https://x-access-token:$ACTIONS_DEPLOY_KEY@github.com/Prollad99/woz-com.git && break
+            echo "Push attempt $i/$max_retries failed"
+            sleep 5
+            git pull --rebase
+          done
